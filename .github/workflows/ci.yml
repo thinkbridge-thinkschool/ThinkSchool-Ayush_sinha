@@ -70,32 +70,70 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          python3 - <<'PY'
+          import glob
+          import posixpath
+          import sys
+          import xml.etree.ElementTree as ET
 
-          THRESHOLD=70
-          COVERED=0
-          VALID=0
-          FOUND=0
+          THRESHOLD = 70.0
+          reports = sorted(glob.glob("TestResults/**/coverage.cobertura.xml", recursive=True))
+          if not reports:
+              sys.exit("No coverage.cobertura.xml files found under TestResults/")
 
-          while IFS= read -r -d '' f; do
-            FOUND=1
-            c=$(grep -oP 'lines-covered="\K[0-9]+' "$f" | head -1)
-            v=$(grep -oP 'lines-valid="\K[0-9]+' "$f" | head -1)
-            echo "  $f -> covered=$c valid=$v"
-            COVERED=$((COVERED + c))
-            VALID=$((VALID + v))
-          done < <(find TestResults -name "coverage.cobertura.xml" -print0)
+          valid_lines = set()
+          covered_lines = set()
 
-          if [ "$FOUND" -eq 0 ]; then
-            echo "No coverage.cobertura.xml files found under TestResults/"
-            exit 1
-          fi
+          def normalize_source(filename, source_roots):
+              filename = filename.replace("\\\\", "/")
+              candidates = [filename]
+              if not posixpath.isabs(filename):
+                  candidates.extend(
+                      posixpath.join(root.replace("\\\\", "/"), filename)
+                      for root in source_roots
+                  )
+              path = posixpath.normpath(candidates[-1])
+              # Cobertura reports can use different absolute checkout roots.
+              # Keep the repository-relative portion when it is available.
+              marker = "day-1/QuotesApi/"
+              if marker in path:
+                  path = marker + path.split(marker, 1)[1]
+              return path
 
-          if [ "$VALID" -eq 0 ]; then
-            echo "No coverable lines found; cannot compute coverage."
-            exit 1
-          fi
+          for report in reports:
+              root = ET.parse(report).getroot()
+              source_roots = [source.text or "" for source in root.findall("./sources/source")]
+              report_valid = set()
+              report_covered = set()
 
-          PERCENTAGE=$(awk "BEGIN { printf \"%.2f\", ($COVERED / $VALID) * 100 }")
-          echo "Total line coverage: $PERCENTAGE% (threshold: ${THRESHOLD}%)"
+              for class_element in root.findall(".//class"):
+                  filename = class_element.get("filename")
+                  if not filename:
+                      continue
+                  source = normalize_source(filename, source_roots)
+                  for line in class_element.findall("./lines/line"):
+                      number = line.get("number")
+                      if number is None:
+                          continue
+                      key = f"{source}:{number}"
+                      report_valid.add(key)
+                      if int(line.get("hits", "0")) > 0:
+                          report_covered.add(key)
 
-          awk "BEGIN { exit !($PERCENTAGE >= $THRESHOLD) }"
+              print(f"Coverage report: {report}")
+              print(f"  covered: {len(report_covered)}")
+              print(f"  valid: {len(report_valid)}")
+              valid_lines.update(report_valid)
+              covered_lines.update(report_covered)
+
+          if not valid_lines:
+              sys.exit("No coverable lines found; cannot compute coverage.")
+
+          percentage = len(covered_lines) / len(valid_lines) * 100
+          print(f"Unique covered lines: {len(covered_lines)}")
+          print(f"Unique valid lines: {len(valid_lines)}")
+          print(f"Total line coverage: {percentage:.2f}%")
+          print(f"Required threshold: {THRESHOLD:.0f}%")
+          if percentage < THRESHOLD:
+              sys.exit(1)
+          PY

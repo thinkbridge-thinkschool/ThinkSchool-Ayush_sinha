@@ -48,6 +48,8 @@ app.UseAuthentication();
 
 app.UseAuthorization();
 
+app.MapHealthChecks("/health");
+
 app.MapQuoteEndpoints();
 
 app.MapControllers();
