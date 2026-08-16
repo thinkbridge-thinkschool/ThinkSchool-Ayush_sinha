@@ -61,6 +61,13 @@ public static class InfrastructureExtensions
             IAuthorizationHandler,
             CollectionOwnershipAuthorizationHandler>();
 
+        // Backs the /health endpoint mapped in Program.cs. Checks the real
+        // dependency (can we reach the database?) rather than always
+        // returning healthy - a DB outage should show up here, not just as
+        // 500s on the quote endpoints.
+        services.AddHealthChecks()
+            .AddDbContextCheck<AppDbContext>();
+
         services.AddObservability(configuration);
 
         return services;
