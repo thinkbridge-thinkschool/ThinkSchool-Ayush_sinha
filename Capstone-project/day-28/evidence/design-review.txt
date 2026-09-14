@@ -1,0 +1,75 @@
+=== Day 28 design review — self-review inspection notes ===
+
+Scope: MaintainXpert (Capstone-project) only. No mentor or peer review
+artifact exists anywhere in this repository (checked: grep across
+Capstone-project for "mentor", "critique", "feedback", "peer review",
+"follow-up" — the only match is day-27/threat-model/stride-lite.md's own
+"follow-up" notes on unrelated residual-risk items, not a design
+critique of this ADR's subject). Git history for Capstone-project has
+exactly two commits before this one: "Kick off MaintainXpert capstone"
+(Day 22) and "Security pass" (Day 27) — neither is a review of another
+person's feedback. Accordingly, the critique below is self-review, not
+attributed to any real mentor or peer, per the Day 28 task's honesty
+requirement.
+
+--- Files inspected for the ADR subject (modular monolith / event dispatch) ---
+
+docs/architecture.md                                        (existing design doc, sections 6-9)
+src/MaintainXpert.Api/Program.cs                             (DI wiring, dispatcher registration)
+src/MaintainXpert.Api/Infrastructure/InProcessDomainEventDispatcher.cs
+src/MaintainXpert.SharedKernel/IDomainEvent.cs
+src/MaintainXpert.SharedKernel/IDomainEventHandler.cs
+src/MaintainXpert.SharedKernel/IDomainEventDispatcher.cs
+src/MaintainXpert.Maintenance/Application/WorkOrderService.cs
+src/MaintainXpert.Assets/Application/WorkOrderCompletedHandler.cs
+src/MaintainXpert.Notifications/Application/WorkOrderCreatedNotificationHandler.cs
+src/MaintainXpert.Notifications/Infrastructure/ConsoleNotificationSink.cs
+src/MaintainXpert.Api/Infrastructure/GlobalExceptionHandler.cs
+src/MaintainXpert.Api/Endpoints/WorkOrderEndpoints.cs
+day-27/evidence/architecture.txt                             (Azure subscription quota evidence)
+day-27/threat-model/stride-lite.md                           (dispatcher modeled as a component)
+day-22/... (Day 22 material lives in README.md/result.md at the repo root, not a separate day-22 folder)
+
+--- Finding traced through the code ---
+
+1. WorkOrderService.CreateAsync/AssignTechnicianAsync/StartAsync/CompleteAsync
+   all call DispatchAndClearAsync, which does:
+       await _dispatcher.DispatchAsync(workOrder.DomainEvents, cancellationToken);
+   synchronously, in the same call stack as the HTTP request.
+
+2. InProcessDomainEventDispatcher.DispatchAsync resolves every
+   IDomainEventHandler<T> for the event type and awaits each one in a
+   plain foreach loop — no try/catch around the per-handler invoke.
+
+3. If WorkOrderCompletedHandler.HandleAsync (Assets) or
+   WorkOrderCreatedNotificationHandler.HandleAsync (Notifications)
+   throws for any reason, that exception is not caught anywhere between
+   the handler and the ASP.NET Core pipeline. It propagates up through
+   WorkOrderService, out of the minimal API endpoint delegate
+   (WorkOrderEndpoints.cs), and is caught only by the top-level
+   GlobalExceptionHandler, which returns a generic 500 ProblemDetails.
+
+4. For WorkOrderService.CreateAsync specifically: the WorkOrder is
+   already persisted via IWorkOrderRepository.AddAsync BEFORE dispatch
+   runs. So a handler failure on the Notifications/Assets side turns
+   into a 500 response for a write that already succeeded on the
+   Maintenance side. There is no idempotency key on POST /work-orders,
+   so a caller that retries after seeing that 500 risks creating a
+   duplicate work order for the same asset.
+
+This is the concrete, code-grounded version of the "synchronous
+dependency may create availability coupling" critique category — it
+directly challenges this ADR's chosen mechanism (in-process, synchronous,
+inline-awaited dispatch), not a tangential concern.
+
+--- Note on scope: one unrelated observation, out of scope for Day 28 ---
+
+While reading the persistence path for this review, SqlWorkOrderRepository
+and SqlAssetRepository were observed to call _db.SaveChangesAsync only
+inside their AddAsync methods, not after GetByIdAsync-then-mutate flows
+(assign/start/complete). This is a separate, Day 27 implementation detail
+unrelated to the modular-monolith/event-dispatch decision this ADR
+covers. Per the Day 28 task scope (documentation only, do not modify Day
+27 implementation), it was not investigated further or changed here — it
+is flagged to the requester directly, outside the ADR/README/result
+deliverables, so it isn't lost.
