@@ -1,0 +1,52 @@
+Day 29 — Raw build/test transcript (full solution, after adding the
+three new test projects). Captured from a real run, not reconstructed.
+
+$ cd Capstone-project
+$ dotnet build
+
+  Determining projects to restore...
+  All projects are up-to-date for restore.
+  MaintainXpert.SharedKernel -> src/MaintainXpert.SharedKernel/bin/Debug/net10.0/MaintainXpert.SharedKernel.dll
+  MaintainXpert.Maintenance -> src/MaintainXpert.Maintenance/bin/Debug/net10.0/MaintainXpert.Maintenance.dll
+  MaintainXpert.Assets -> src/MaintainXpert.Assets/bin/Debug/net10.0/MaintainXpert.Assets.dll
+  MaintainXpert.Notifications -> src/MaintainXpert.Notifications/bin/Debug/net10.0/MaintainXpert.Notifications.dll
+  MaintainXpert.Assets.Tests -> tests/MaintainXpert.Assets.Tests/bin/Debug/net10.0/MaintainXpert.Assets.Tests.dll
+  MaintainXpert.Maintenance.Tests -> tests/MaintainXpert.Maintenance.Tests/bin/Debug/net10.0/MaintainXpert.Maintenance.Tests.dll
+  MaintainXpert.Notifications.Tests -> tests/MaintainXpert.Notifications.Tests/bin/Debug/net10.0/MaintainXpert.Notifications.Tests.dll
+  MaintainXpert.Api -> src/MaintainXpert.Api/bin/Debug/net10.0/MaintainXpert.Api.dll
+  MaintainXpert.Api.Tests -> tests/MaintainXpert.Api.Tests/bin/Debug/net10.0/MaintainXpert.Api.Tests.dll
+
+Build succeeded.
+    0 Warning(s)
+    0 Error(s)
+
+Time Elapsed 00:00:05.22
+
+$ dotnet test
+
+  Determining projects to restore...
+  All projects are up-to-date for restore.
+
+Test run for MaintainXpert.Maintenance.Tests.dll (.NETCoreApp,Version=v10.0)
+A total of 1 test files matched the specified pattern.
+Passed!  - Failed:     0, Passed:     7, Skipped:     0, Total:     7, Duration: 156 ms - MaintainXpert.Maintenance.Tests.dll (net10.0)
+
+Test run for MaintainXpert.Notifications.Tests.dll (.NETCoreApp,Version=v10.0)
+A total of 1 test files matched the specified pattern.
+Passed!  - Failed:     0, Passed:     1, Skipped:     0, Total:     1, Duration: 102 ms - MaintainXpert.Notifications.Tests.dll (net10.0)
+
+Test run for MaintainXpert.Assets.Tests.dll (.NETCoreApp,Version=v10.0)
+A total of 1 test files matched the specified pattern.
+Passed!  - Failed:     0, Passed:     5, Skipped:     0, Total:     5, Duration: 91 ms - MaintainXpert.Assets.Tests.dll (net10.0)
+
+Test run for MaintainXpert.Api.Tests.dll (.NETCoreApp,Version=v10.0)
+A total of 1 test files matched the specified pattern.
+Passed!  - Failed:     0, Passed:     4, Skipped:     0, Total:     4, Duration: 1 s - MaintainXpert.Api.Tests.dll (net10.0)
+
+=== Summary ===
+4 test projects, 17 tests total, 17 passed, 0 failed, 0 skipped.
+  - MaintainXpert.Maintenance.Tests   7/7  (pre-existing, Day 22)
+  - MaintainXpert.Notifications.Tests 1/1  (new, Day 29)
+  - MaintainXpert.Assets.Tests        5/5  (new, Day 29)
+  - MaintainXpert.Api.Tests           4/4  (new, Day 29 — dispatch-flow
+    integration test exercising the full happy path end to end)

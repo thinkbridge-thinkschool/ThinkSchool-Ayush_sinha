@@ -8,5 +8,8 @@
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/MaintainXpert.Maintenance.Tests/MaintainXpert.Maintenance.Tests.csproj" />
+    <Project Path="tests/MaintainXpert.Assets.Tests/MaintainXpert.Assets.Tests.csproj" />
+    <Project Path="tests/MaintainXpert.Notifications.Tests/MaintainXpert.Notifications.Tests.csproj" />
+    <Project Path="tests/MaintainXpert.Api.Tests/MaintainXpert.Api.Tests.csproj" />
   </Folder>
 </Solution>

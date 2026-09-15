@@ -1,0 +1,76 @@
+Day 29 — Happy path verification (local dev, in-memory persistence fallback)
+Host: http://localhost:5223 (dotnet run, ASPNETCORE_ENVIRONMENT=Development)
+No ConnectionStrings:AzureSql configured on this machine, so the app used the
+existing, already-documented in-memory repository fallback (Program.cs,
+useSqlServer == false branch) — the real Azure SQL path (behind a private
+endpoint per day-27) is not reachable from this local dev machine; it was
+verified end-to-end at Day 27 (day-27/evidence/final-verification.txt) and
+was not re-touched today (no Azure resources were called or modified).
+
+A fresh, local-only test client secret was set via `dotnet user-secrets`
+on this machine to obtain a bearer token (the pre-existing local dev
+secret's plaintext was never recorded, by the same no-plaintext-secrets
+convention already followed in day-27/evidence/authentication.txt). This
+only changed this developer's local secret store, not source control or
+any deployed environment. No token or secret value is recorded below.
+
+=== 1. Unauthenticated write rejected ===
+POST /api/v1/assets (no Authorization header)
+HTTP 401
+
+=== 2. Token issuance (local dev test client) ===
+POST /auth/token
+HTTP 200
+{"accessToken":"<redacted>","tokenType":"Bearer","expiresIn":900}
+
+=== 3. Register asset ===
+POST /api/v1/assets  {"name":"HVAC Unit 4"}
+HTTP 201
+{"id":"3470a00a-7aea-474b-a00a-219f09908d12","name":"HVAC Unit 4","status":"Operational","lastMaintenanceCompletedAt":null}
+
+=== 4. Retrieve asset ===
+GET /api/v1/assets/3470a00a-7aea-474b-a00a-219f09908d12
+HTTP 200
+{"id":"3470a00a-7aea-474b-a00a-219f09908d12","name":"HVAC Unit 4","status":"Operational","lastMaintenanceCompletedAt":null}
+
+=== 5. Create work order against the asset ===
+POST /api/v1/work-orders  {"assetId":"3470a00a-7aea-474b-a00a-219f09908d12","description":"Replace worn belt","priority":"Medium"}
+HTTP 201
+{"id":"c8f2263e-c323-4e6c-8dbe-74e93d860371","assetId":"3470a00a-7aea-474b-a00a-219f09908d12","description":"Replace worn belt","priority":"Medium","status":"Open","assignedTechnicianId":null,"createdAt":"2026-09-15T09:47:58.2088288+00:00"}
+
+Console (Notifications module, WorkOrderCreated -> ConsoleNotificationSink):
+[notification] 2026-09-15T09:47:58.2088288+00:00 New maintenance work order - Work order c8f2263e-c323-4e6c-8dbe-74e93d860371 was created for asset 3470a00a-7aea-474b-a00a-219f09908d12.
+
+=== 6. Assign technician ===
+POST /api/v1/work-orders/c8f2263e-c323-4e6c-8dbe-74e93d860371/assign  {"technicianId":"11111111-1111-1111-1111-111111111111"}
+HTTP 200
+{"...","status":"Assigned","assignedTechnicianId":"11111111-1111-1111-1111-111111111111",...}
+
+=== 7. Start work order ===
+POST /api/v1/work-orders/c8f2263e-c323-4e6c-8dbe-74e93d860371/start
+HTTP 200
+{"...","status":"InProgress",...}
+
+=== 8. Complete work order ===
+POST /api/v1/work-orders/c8f2263e-c323-4e6c-8dbe-74e93d860371/complete
+HTTP 200
+{"...","status":"Completed",...}
+
+=== 9. Verify asset reflects completed maintenance (WorkOrderCompleted -> Assets.WorkOrderCompletedHandler) ===
+GET /api/v1/assets/3470a00a-7aea-474b-a00a-219f09908d12
+HTTP 200
+{"id":"3470a00a-7aea-474b-a00a-219f09908d12","name":"HVAC Unit 4","status":"Operational","lastMaintenanceCompletedAt":"2026-09-15T09:47:58.854788+00:00"}
+
+=== 10. Validation failure: empty description ===
+POST /api/v1/work-orders  {"assetId":"...","description":"","priority":"Medium"}
+HTTP 400
+{"title":"One or more validation errors occurred.","status":400,"errors":{"Description":["The Description field is required.","The field Description must be a string with a minimum length of 1 and a maximum length of 500."]}}
+
+=== 11. Not-found: complete a nonexistent work order ===
+POST /api/v1/work-orders/00000000-0000-0000-0000-000000000000/complete
+HTTP 404
+{"title":"Work order not found","status":404,"detail":"Work order '00000000-0000-0000-0000-000000000000' was not found."}
+
+=== 12. Not-found: get a nonexistent asset ===
+GET /api/v1/assets/00000000-0000-0000-0000-000000000000
+HTTP 404
