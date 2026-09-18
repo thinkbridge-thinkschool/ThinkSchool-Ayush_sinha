@@ -1,0 +1,80 @@
+Day 31 - security re-check
+===========================
+
+Scope: re-check the application as it exists after Day 27's threat model
+and Day 30's feature-completeness pass, before opening the Day 31 PR.
+
+1. Authentication / authorization
+   - Every write endpoint (POST assets, POST/assign/start/complete work
+     orders, POST decommission) still requires a bearer token carrying
+     the `workorders.write` scope claim, via RequireAuthorization -
+     unchanged since Day 27, re-verified by the existing
+     Registering_an_asset_without_a_token_is_rejected test and the new
+     Day 31 tests below.
+   - GET /api/v1/assets/{id} and GET /api/v1/work-orders/{id} remain
+     unauthenticated by design (read-only, keyed by an unguessable
+     random GUID, no per-tenant data to leak). Re-checked against Day
+     27's STRIDE-lite threat model (Information Disclosure section) -
+     this was an accepted design point then, not a regression now, and
+     changing it is a bigger scope decision than a polish pass.
+
+2. POST /auth/token - credential stuffing (real finding, fixed)
+   Day 27's own threat model flagged this explicitly and left it
+   unmitigated: "Credential stuffing against the client secret ... Not
+   added in this pass - flagged as a follow-up" and "/auth/token -
+   Flooding to exhaust token-issuance capacity ... None ... Accepted
+   risk, flagged for a follow-up pass." Confirmed still true at the
+   start of this session (no rate limiting anywhere in Program.cs).
+
+   Fix: ASP.NET Core's built-in rate limiter (Microsoft.AspNetCore.RateLimiting,
+   part of the shared framework - no new package), a fixed window of 10
+   requests/minute per caller on /auth/token, rejecting with 429 once
+   exceeded. Regression test:
+   tests/MaintainXpert.Api.Tests/AuthTokenRateLimitingTests.cs
+   (Auth_token_serves_valid_requests_within_the_limit_then_rejects_once_it_is_exceeded) -
+   passed as part of the full suite (see build-and-test-output.txt).
+
+   Residual risk, documented rather than silently left out: the limiter
+   is per-process, in-memory, and keyed by the framework's default
+   partition (remote endpoint). A distributed attacker spread across many
+   source IPs, or a deployment scaled to multiple replicas without a
+   shared limiter store, is not fully covered by this fix - a real
+   distributed rate limiter (e.g. backed by Redis) would be needed for
+   that. Out of scope for this polish pass; not claimed as fixed.
+
+3. Input validation
+   - StringLength/Required attributes on RegisterAssetRequest,
+     CreateWorkOrderRequest still enforced via ValidationExtensions.Validate.
+     The Day 31 perf fix (caching the per-type reflection metadata) is
+     behavior-preserving - confirmed by
+     tests/MaintainXpert.Api.Tests/ValidationExtensionsTests.cs, which
+     pins the exact same validation outcomes before asserting nothing
+     about the caching mechanism itself.
+   - 16 KiB Kestrel MaxRequestBodySize unchanged.
+
+4. Sensitive data exposure / error responses
+   - GlobalExceptionHandler still returns generic ProblemDetails (title/
+     status/detail only) for unhandled exceptions - no stack traces, no
+     exception type names, re-verified by reading the current handler.
+   - No secrets, connection strings, or key material found in any
+     appsettings.json/appsettings.Development.json (Jwt:Key and
+     IntegrationClient:ClientSecretHash are both empty strings in
+     source; real values are expected via user-secrets/environment
+     variables, never committed - unchanged from Day 27/29/30).
+   - Logging (AuthEndpoints, TokenService) logs the client ID on token
+     issuance/rejection, never the client secret or the issued token.
+
+5. Dependency vulnerabilities
+   Command: `dotnet list Capstone-project/MaintainXpert.slnx package
+   --vulnerable --include-transitive`
+   Result: every project (MaintainXpert.Api, .Assets, .Maintenance,
+   .Notifications, .SharedKernel, and all five test projects) reports
+   "has no vulnerable packages given the current sources." Full output
+   captured in build-and-test-output.txt. This check now also runs in
+   CI (.github/workflows/ci.yml, capstone job) and fails the build if
+   any vulnerable package is reported.
+
+Conclusion: one real, previously-documented gap found and fixed
+(auth-token rate limiting) with a regression test; everything else
+re-checked and confirmed unchanged/still holding, with the one residual
+risk on the fix itself stated rather than hidden.

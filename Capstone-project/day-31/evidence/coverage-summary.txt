@@ -1,0 +1,58 @@
+Day 31 - coverage summary
+=========================
+
+Method: coverlet.collector via `dotnet test --collect:"XPlat Code Coverage"`,
+one run per test project, cobertura XML parsed and aggregated by
+(source file, line number) with a small PowerShell script (no python3 on
+this workstation; the same aggregation logic as the day-1 CI job's
+Cobertura parser, just re-expressed in PowerShell for local use).
+
+A note on what each number actually measures: coverlet instruments every
+assembly loaded into the test process. MaintainXpert.Api.Tests hosts the
+full application in-process via WebApplicationFactory, so its run
+instruments Maintenance/Assets/Notifications/SharedKernel too, not just
+the API host project. The per-module unit test runs below only load that
+module's own dependency closure, so they report that module in isolation.
+
+Per test project (dotnet test <project> --collect:"XPlat Code Coverage"):
+
+  MaintainXpert.Maintenance.Tests (unit)
+    11 tests passed, 0 failed
+    line coverage: 109 / 158 = 68.99%
+
+  MaintainXpert.Assets.Tests (unit)
+    10 tests passed, 0 failed
+    line coverage: 78 / 227 = 34.36%
+
+  MaintainXpert.Notifications.Tests (unit)
+    1 test passed, 0 failed
+    line coverage: 22 / 174 = 12.64%
+
+  MaintainXpert.Api.Tests (integration, WebApplicationFactory, full stack)
+    17 tests passed, 0 failed
+    line coverage: 708 / 1217 = 58.18%
+
+  MaintainXpert.E2E.Tests (E2E, real out-of-process Kestrel host)
+    1 test passed, 0 failed
+    coverage not collected: the assertions run against a separate `dotnet`
+    process over a real socket, so coverlet (which instruments the test
+    process) cannot see code executing inside that other process. E2E
+    coverage here is reported as pass/fail, not a line percentage - the
+    honest limitation of black-box E2E coverage measurement, not an
+    omission.
+
+Why Assets/Notifications unit coverage is lower than Maintenance's: their
+Infrastructure-layer code (SqlAssetRepository, SqlWorkOrderRepository,
+AssetLookupAdapter, ConsoleNotificationSink) is exercised by the
+Api.Tests integration suite (SqlRepositoryPersistenceTests,
+WorkOrderHappyPathTests) rather than by their own module's unit tests,
+which focus on domain invariants and application-level handlers. The
+Api.Tests figure (58.18% of the whole application, 1217 instrumentable
+lines) is the more representative full-stack number.
+
+No coverage threshold is enforced in CI for Capstone-project (unlike the
+day-1 QuotesApi job's 70% gate) - Day 31 does not require one, and
+gating on an arbitrary number here, with Assets/Notifications unit
+coverage naturally lower for the reason above, would either be
+meaningless or would have to be set low enough to be decorative. The real
+measured numbers are reported instead.
