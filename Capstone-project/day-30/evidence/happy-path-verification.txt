@@ -1,0 +1,53 @@
+Day 30 — manual HTTP verification against a locally running instance of the real API
+(dotnet run, src/MaintainXpert.Api, ASPNETCORE_ENVIRONMENT=Development, in-memory
+repository fallback — same supported local/dev configuration documented in README.md
+and used for Day 29's verification; this dev machine cannot reach the Azure SQL
+instance behind the Day 27 private endpoint).
+
+=== Auth ===
+POST /auth/token (valid client credentials) -> 200
+{"accessToken":"<jwt>","tokenType":"Bearer","expiresIn":900}
+
+=== Full lifecycle: create asset -> raise work order -> assign -> start -> complete ===
+POST /api/v1/assets {"Name":"HVAC Unit 4 - Day30"} -> 201
+{"id":"e8e62a8c-1cfc-4e7b-8d5b-b7c2fff108f9","name":"HVAC Unit 4 - Day30","status":"Operational","lastMaintenanceCompletedAt":null}
+
+POST /api/v1/work-orders {"AssetId":"e8e62a8c-...","Description":"Replace worn belt","Priority":"Medium"} -> 201
+status=Open, id=a8695e0b-c3af-45d6-acfd-55de5675b3ce
+
+POST /api/v1/work-orders/{id}/assign {"TechnicianId":"<guid>"} -> 200, status=Assigned
+
+POST /api/v1/work-orders/{id}/start -> 200, status=InProgress
+
+GET /api/v1/assets/{id} (immediately after start) -> status=UnderMaintenance
+  -> proves the new WorkOrderStarted -> Assets.WorkOrderStartedHandler dispatch
+     actually flips the asset's status, not just the work order's.
+
+POST /api/v1/work-orders/{id}/complete -> 200, status=Completed
+
+GET /api/v1/assets/{id} (after completion) -> status=Operational,
+  lastMaintenanceCompletedAt=2026-09-18T05:35:37.7454445+00:00
+  -> proves the existing WorkOrderCompleted -> Assets.WorkOrderCompletedHandler dispatch
+     still updates the asset, and that the asset returns to Operational once work
+     is done (not stuck at UnderMaintenance).
+
+Console notification sink log line captured from the running process:
+[notification] 2026-09-18T05:35:36.8540117+00:00 New maintenance work order - Work
+order a8695e0b-c3af-45d6-acfd-55de5675b3ce was created for asset
+e8e62a8c-1cfc-4e7b-8d5b-b7c2fff108f9.
+
+=== New Day 30 business rule: a work order must reference a real, non-decommissioned asset ===
+POST /api/v1/work-orders {"AssetId":"<random guid>","Description":"x","Priority":"Medium"} -> 404
+{"title":"Asset not found","status":404,"detail":"Asset '393ee298-ed9a-44a4-a819-b846879f453b' was not found.","instance":"0HNOL8QBKRF9L:00000002"}
+
+POST /api/v1/assets {"Name":"Retired Compressor"} -> 201
+POST /api/v1/assets/{id}/decommission -> 200, status=Decommissioned
+POST /api/v1/work-orders {"AssetId":"<decommissioned id>","Description":"x","Priority":"Medium"} -> 409
+
+=== Decommission endpoint edge cases ===
+POST /api/v1/assets/{already-decommissioned-id}/decommission -> 409
+POST /api/v1/assets/{random guid}/decommission -> 404
+
+=== Pre-existing validation/auth cases (re-verified, unchanged from Day 29) ===
+POST /api/v1/work-orders with empty Description -> 400
+POST /api/v1/assets without a bearer token -> 401

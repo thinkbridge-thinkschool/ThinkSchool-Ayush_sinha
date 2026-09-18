@@ -1,0 +1,48 @@
+﻿  Determining projects to restore...
+  All projects are up-to-date for restore.
+  MaintainXpert.SharedKernel -> C:\Users\DELL\Desktop\thingschool\Capstone-project\src\MaintainXpert.SharedKernel\bin\Debug\net10.0\MaintainXpert.SharedKernel.dll
+  MaintainXpert.Maintenance -> C:\Users\DELL\Desktop\thingschool\Capstone-project\src\MaintainXpert.Maintenance\bin\Debug\net10.0\MaintainXpert.Maintenance.dll
+  MaintainXpert.Notifications -> C:\Users\DELL\Desktop\thingschool\Capstone-project\src\MaintainXpert.Notifications\bin\Debug\net10.0\MaintainXpert.Notifications.dll
+  MaintainXpert.Assets -> C:\Users\DELL\Desktop\thingschool\Capstone-project\src\MaintainXpert.Assets\bin\Debug\net10.0\MaintainXpert.Assets.dll
+  MaintainXpert.Notifications.Tests -> C:\Users\DELL\Desktop\thingschool\Capstone-project\tests\MaintainXpert.Notifications.Tests\bin\Debug\net10.0\MaintainXpert.Notifications.Tests.dll
+  MaintainXpert.Assets.Tests -> C:\Users\DELL\Desktop\thingschool\Capstone-project\tests\MaintainXpert.Assets.Tests\bin\Debug\net10.0\MaintainXpert.Assets.Tests.dll
+  MaintainXpert.Maintenance.Tests -> C:\Users\DELL\Desktop\thingschool\Capstone-project\tests\MaintainXpert.Maintenance.Tests\bin\Debug\net10.0\MaintainXpert.Maintenance.Tests.dll
+  MaintainXpert.Api -> C:\Users\DELL\Desktop\thingschool\Capstone-project\src\MaintainXpert.Api\bin\Debug\net10.0\MaintainXpert.Api.dll
+  MaintainXpert.Api.Tests -> C:\Users\DELL\Desktop\thingschool\Capstone-project\tests\MaintainXpert.Api.Tests\bin\Debug\net10.0\MaintainXpert.Api.Tests.dll
+
+Build succeeded.
+    0 Warning(s)
+    0 Error(s)
+
+Time Elapsed 00:02:03.56
+
+
+=== dotnet test ===
+
+  Determining projects to restore...
+  All projects are up-to-date for restore.
+  MaintainXpert.SharedKernel -> C:\Users\DELL\Desktop\thingschool\Capstone-project\src\MaintainXpert.SharedKernel\bin\Debug\net10.0\MaintainXpert.SharedKernel.dll
+  MaintainXpert.Maintenance -> C:\Users\DELL\Desktop\thingschool\Capstone-project\src\MaintainXpert.Maintenance\bin\Debug\net10.0\MaintainXpert.Maintenance.dll
+  MaintainXpert.Maintenance.Tests -> C:\Users\DELL\Desktop\thingschool\Capstone-project\tests\MaintainXpert.Maintenance.Tests\bin\Debug\net10.0\MaintainXpert.Maintenance.Tests.dll
+Test run for C:\Users\DELL\Desktop\thingschool\Capstone-project\tests\MaintainXpert.Maintenance.Tests\bin\Debug\net10.0\MaintainXpert.Maintenance.Tests.dll (.NETCoreApp,Version=v10.0)
+A total of 1 test files matched the specified pattern.
+
+Passed!  - Failed:     0, Passed:    11, Skipped:     0, Total:    11, Duration: 410 ms - MaintainXpert.Maintenance.Tests.dll (net10.0)
+  MaintainXpert.Notifications -> C:\Users\DELL\Desktop\thingschool\Capstone-project\src\MaintainXpert.Notifications\bin\Debug\net10.0\MaintainXpert.Notifications.dll
+  MaintainXpert.Notifications.Tests -> C:\Users\DELL\Desktop\thingschool\Capstone-project\tests\MaintainXpert.Notifications.Tests\bin\Debug\net10.0\MaintainXpert.Notifications.Tests.dll
+Test run for C:\Users\DELL\Desktop\thingschool\Capstone-project\tests\MaintainXpert.Notifications.Tests\bin\Debug\net10.0\MaintainXpert.Notifications.Tests.dll (.NETCoreApp,Version=v10.0)
+A total of 1 test files matched the specified pattern.
+
+Passed!  - Failed:     0, Passed:     1, Skipped:     0, Total:     1, Duration: 280 ms - MaintainXpert.Notifications.Tests.dll (net10.0)
+  MaintainXpert.Assets -> C:\Users\DELL\Desktop\thingschool\Capstone-project\src\MaintainXpert.Assets\bin\Debug\net10.0\MaintainXpert.Assets.dll
+  MaintainXpert.Assets.Tests -> C:\Users\DELL\Desktop\thingschool\Capstone-project\tests\MaintainXpert.Assets.Tests\bin\Debug\net10.0\MaintainXpert.Assets.Tests.dll
+Test run for C:\Users\DELL\Desktop\thingschool\Capstone-project\tests\MaintainXpert.Assets.Tests\bin\Debug\net10.0\MaintainXpert.Assets.Tests.dll (.NETCoreApp,Version=v10.0)
+A total of 1 test files matched the specified pattern.
+
+Passed!  - Failed:     0, Passed:    10, Skipped:     0, Total:    10, Duration: 402 ms - MaintainXpert.Assets.Tests.dll (net10.0)
+  MaintainXpert.Api -> C:\Users\DELL\Desktop\thingschool\Capstone-project\src\MaintainXpert.Api\bin\Debug\net10.0\MaintainXpert.Api.dll
+  MaintainXpert.Api.Tests -> C:\Users\DELL\Desktop\thingschool\Capstone-project\tests\MaintainXpert.Api.Tests\bin\Debug\net10.0\MaintainXpert.Api.Tests.dll
+Test run for C:\Users\DELL\Desktop\thingschool\Capstone-project\tests\MaintainXpert.Api.Tests\bin\Debug\net10.0\MaintainXpert.Api.Tests.dll (.NETCoreApp,Version=v10.0)
+A total of 1 test files matched the specified pattern.
+
+Passed!  - Failed:     0, Passed:    10, Skipped:     0, Total:    10, Duration: 3 s - MaintainXpert.Api.Tests.dll (net10.0)
