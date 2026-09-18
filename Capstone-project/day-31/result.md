@@ -8,16 +8,9 @@ Workflow: `.github/workflows/ci.yml`, job `capstone` (new for Day 31; the
 existing `test` job, covering `day-1/QuotesApi`, is untouched and also
 green).
 
-CI run for commit `9a65059c` (the current branch tip): see the Actions
-tab for `feature/day-31-polish` -
-https://github.com/thinkbridge-thinkschool/ThinkSchool-Ayush_sinha/actions?query=branch%3Afeature%2Fday-31-polish
-
-The identical tree (verified with `git diff` — zero output) was run and
-confirmed green as commit `75d1854b`, run
-https://github.com/thinkbridge-thinkschool/ThinkSchool-Ayush_sinha/actions/runs/35321840712,
-before the commit messages were rewritten to drop an attribution trailer
-that shouldn't have been there; the commit hashes changed but no file
-content did. Both jobs on that run completed with `conclusion: success`:
+**Run for the current branch-tip commit `b501b0f4`** (verified via the
+GitHub Actions API, `conclusion: success`, both jobs, every step):
+https://github.com/thinkbridge-thinkschool/ThinkSchool-Ayush_sinha/actions/runs/35323618791
 
 - `test` (day-1/QuotesApi): Checkout, Setup .NET SDK, restore/build/test
   Tests.Domain and Tests.Integration, upload results/coverage, enforce
@@ -28,9 +21,13 @@ content did. Both jobs on that run completed with `conclusion: success`:
   test (real out-of-process host), vulnerable-package check, upload
   test/coverage artifacts — all steps `success`.
 
-*(This section is being finalized against the run on the exact current
-branch-tip SHA before this document is considered final — see the note
-at the end of this file if that confirmation is still pending.)*
+The identical code was also independently confirmed green one commit
+earlier (`75d1854b`, run
+https://github.com/thinkbridge-thinkschool/ThinkSchool-Ayush_sinha/actions/runs/35321840712)
+before an attribution trailer that shouldn't have been in the commit
+messages was stripped and the branch rewritten (`git diff` between the
+two trees returns zero output — file content never changed, only commit
+messages).
 
 ## Test Coverage
 
@@ -154,7 +151,11 @@ passing as part of the 17/17 in `MaintainXpert.Api.Tests`.
 - Folder: https://github.com/thinkbridge-thinkschool/ThinkSchool-Ayush_sinha/tree/feature/day-31-polish/Capstone-project/day-31
 - Branch: `feature/day-31-polish`
 - CI: see [CI Run](#ci-run) above.
-- PR: *pending — see the note at the end of this file.*
+- PR: pending — GitHub CLI is installed but not yet authenticated in this
+  environment (`gh auth login` required). The branch is pushed and ready;
+  open the PR from
+  https://github.com/thinkbridge-thinkschool/ThinkSchool-Ayush_sinha/pull/new/feature/day-31-polish
+  (base `feature/day-30-feature-completeness`) once authenticated.
 
 ## What I Learned
 
@@ -180,12 +181,3 @@ test and the benchmark both run against the in-memory repository
 fallback, the same limitation every prior day in this capstone has
 carried since Day 27 - the real Azure SQL path (behind a private
 endpoint) still hasn't been re-verified end-to-end from this workstation.
-
----
-
-**Note on completeness:** this file is being finalized against the CI
-run on the exact current branch-tip commit (the commit-message rewrite
-above triggered a fresh run); if that confirmation had not landed by the
-time this was handed off, that would be stated plainly here rather than
-silently assumed. See the final session report for the current, verified
-status.

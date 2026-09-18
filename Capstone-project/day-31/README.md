@@ -173,8 +173,9 @@ meaningful), then runs `dotnet list package --vulnerable` and fails the
 build if any vulnerable package is reported. It leaves the existing
 day-1 job untouched.
 
-Actual, verified result: see [`result.md`](result.md#ci-run) for the run
-URL and status.
+Actual, verified result: [run 35323618791](https://github.com/thinkbridge-thinkschool/ThinkSchool-Ayush_sinha/actions/runs/35323618791),
+`conclusion: success` on both jobs, for the current branch-tip commit.
+Full detail: [`result.md`](result.md#ci-run).
 
 ## Relevant commands
 
