@@ -6,15 +6,18 @@ namespace MaintainXpert.Maintenance.Application;
 public sealed class WorkOrderService
 {
     private readonly IWorkOrderRepository _repository;
+    private readonly IAssetLookup _assetLookup;
     private readonly IDomainEventDispatcher _dispatcher;
     private readonly TimeProvider _timeProvider;
 
     public WorkOrderService(
         IWorkOrderRepository repository,
+        IAssetLookup assetLookup,
         IDomainEventDispatcher dispatcher,
         TimeProvider timeProvider)
     {
         _repository = repository;
+        _assetLookup = assetLookup;
         _dispatcher = dispatcher;
         _timeProvider = timeProvider;
     }
@@ -25,6 +28,13 @@ public sealed class WorkOrderService
         WorkOrderPriority priority,
         CancellationToken cancellationToken = default)
     {
+        var asset = await _assetLookup.FindAsync(assetId, cancellationToken) ?? throw new AssetNotFoundException(assetId);
+
+        if (asset.IsDecommissioned)
+        {
+            throw new AssetDecommissionedException(assetId);
+        }
+
         var workOrder = WorkOrder.Create(assetId, description, priority, _timeProvider.GetUtcNow());
         await _repository.AddAsync(workOrder, cancellationToken);
         await DispatchAndClearAsync(workOrder, cancellationToken);
@@ -38,6 +48,7 @@ public sealed class WorkOrderService
     {
         var workOrder = await GetOrThrowAsync(id, cancellationToken);
         workOrder.AssignTechnician(technicianId);
+        await _repository.UpdateAsync(workOrder, cancellationToken);
         await DispatchAndClearAsync(workOrder, cancellationToken);
         return workOrder;
     }
@@ -45,7 +56,8 @@ public sealed class WorkOrderService
     public async Task<WorkOrder> StartAsync(WorkOrderId id, CancellationToken cancellationToken = default)
     {
         var workOrder = await GetOrThrowAsync(id, cancellationToken);
-        workOrder.Start();
+        workOrder.Start(_timeProvider.GetUtcNow());
+        await _repository.UpdateAsync(workOrder, cancellationToken);
         await DispatchAndClearAsync(workOrder, cancellationToken);
         return workOrder;
     }
@@ -54,6 +66,7 @@ public sealed class WorkOrderService
     {
         var workOrder = await GetOrThrowAsync(id, cancellationToken);
         workOrder.Complete(_timeProvider.GetUtcNow());
+        await _repository.UpdateAsync(workOrder, cancellationToken);
         await DispatchAndClearAsync(workOrder, cancellationToken);
         return workOrder;
     }

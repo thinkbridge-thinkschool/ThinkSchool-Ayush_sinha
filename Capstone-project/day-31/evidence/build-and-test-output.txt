@@ -1,0 +1,66 @@
+=== dotnet build (MaintainXpert.slnx) ===
+  Determining projects to restore...
+  Restored C:\Users\DELL\Desktop\thingschool\Capstone-project\tests\MaintainXpert.E2E.Tests\MaintainXpert.E2E.Tests.csproj (in 774 ms).
+  9 of 10 projects are up-to-date for restore.
+  MaintainXpert.SharedKernel -> C:\Users\DELL\Desktop\thingschool\Capstone-project\src\MaintainXpert.SharedKernel\bin\Debug\net10.0\MaintainXpert.SharedKernel.dll
+  MaintainXpert.Maintenance -> C:\Users\DELL\Desktop\thingschool\Capstone-project\src\MaintainXpert.Maintenance\bin\Debug\net10.0\MaintainXpert.Maintenance.dll
+  MaintainXpert.Assets -> C:\Users\DELL\Desktop\thingschool\Capstone-project\src\MaintainXpert.Assets\bin\Debug\net10.0\MaintainXpert.Assets.dll
+  MaintainXpert.Notifications -> C:\Users\DELL\Desktop\thingschool\Capstone-project\src\MaintainXpert.Notifications\bin\Debug\net10.0\MaintainXpert.Notifications.dll
+  MaintainXpert.Maintenance.Tests -> C:\Users\DELL\Desktop\thingschool\Capstone-project\tests\MaintainXpert.Maintenance.Tests\bin\Debug\net10.0\MaintainXpert.Maintenance.Tests.dll
+  MaintainXpert.Assets.Tests -> C:\Users\DELL\Desktop\thingschool\Capstone-project\tests\MaintainXpert.Assets.Tests\bin\Debug\net10.0\MaintainXpert.Assets.Tests.dll
+  MaintainXpert.Notifications.Tests -> C:\Users\DELL\Desktop\thingschool\Capstone-project\tests\MaintainXpert.Notifications.Tests\bin\Debug\net10.0\MaintainXpert.Notifications.Tests.dll
+  MaintainXpert.Api -> C:\Users\DELL\Desktop\thingschool\Capstone-project\src\MaintainXpert.Api\bin\Debug\net10.0\MaintainXpert.Api.dll
+  MaintainXpert.E2E.Tests -> C:\Users\DELL\Desktop\thingschool\Capstone-project\tests\MaintainXpert.E2E.Tests\bin\Debug\net10.0\MaintainXpert.E2E.Tests.dll
+  MaintainXpert.Api.Tests -> C:\Users\DELL\Desktop\thingschool\Capstone-project\tests\MaintainXpert.Api.Tests\bin\Debug\net10.0\MaintainXpert.Api.Tests.dll
+
+Build succeeded.
+    0 Warning(s)
+    0 Error(s)
+
+Time Elapsed 00:00:08.07
+
+=== dotnet test (MaintainXpert.slnx, excludes E2E - run separately below) ===
+Test run for C:\Users\DELL\Desktop\thingschool\Capstone-project\tests\MaintainXpert.Api.Tests\bin\Debug\net10.0\MaintainXpert.Api.Tests.dll (.NETCoreApp,Version=v10.0)
+Test run for C:\Users\DELL\Desktop\thingschool\Capstone-project\tests\MaintainXpert.Maintenance.Tests\bin\Debug\net10.0\MaintainXpert.Maintenance.Tests.dll (.NETCoreApp,Version=v10.0)
+Test run for C:\Users\DELL\Desktop\thingschool\Capstone-project\tests\MaintainXpert.Assets.Tests\bin\Debug\net10.0\MaintainXpert.Assets.Tests.dll (.NETCoreApp,Version=v10.0)
+Test run for C:\Users\DELL\Desktop\thingschool\Capstone-project\tests\MaintainXpert.E2E.Tests\bin\Debug\net10.0\MaintainXpert.E2E.Tests.dll (.NETCoreApp,Version=v10.0)
+A total of 1 test files matched the specified pattern.
+A total of 1 test files matched the specified pattern.
+A total of 1 test files matched the specified pattern.
+A total of 1 test files matched the specified pattern.
+
+Passed!  - Failed:     0, Passed:    11, Skipped:     0, Total:    11, Duration: 375 ms - MaintainXpert.Maintenance.Tests.dll (net10.0)
+
+Passed!  - Failed:     0, Passed:    10, Skipped:     0, Total:    10, Duration: 435 ms - MaintainXpert.Assets.Tests.dll (net10.0)
+Test run for C:\Users\DELL\Desktop\thingschool\Capstone-project\tests\MaintainXpert.Notifications.Tests\bin\Debug\net10.0\MaintainXpert.Notifications.Tests.dll (.NETCoreApp,Version=v10.0)
+A total of 1 test files matched the specified pattern.
+
+Passed!  - Failed:     0, Passed:    17, Skipped:     0, Total:    17, Duration: 5 s - MaintainXpert.Api.Tests.dll (net10.0)
+
+Passed!  - Failed:     0, Passed:     1, Skipped:     0, Total:     1, Duration: 250 ms - MaintainXpert.Notifications.Tests.dll (net10.0)
+
+Passed!  - Failed:     0, Passed:     1, Skipped:     0, Total:     1, Duration: 8 s - MaintainXpert.E2E.Tests.dll (net10.0)
+
+=== dotnet test (MaintainXpert.E2E.Tests, real out-of-process host) ===
+Test run for C:\Users\DELL\Desktop\thingschool\Capstone-project\tests\MaintainXpert.E2E.Tests\bin\Debug\net10.0\MaintainXpert.E2E.Tests.dll (.NETCoreApp,Version=v10.0)
+A total of 1 test files matched the specified pattern.
+
+Passed!  - Failed:     0, Passed:     1, Skipped:     0, Total:     1, Duration: 2 s - MaintainXpert.E2E.Tests.dll (net10.0)
+
+=== dotnet list package --vulnerable --include-transitive ===
+  Determining projects to restore...
+  All projects are up-to-date for restore.
+
+The following sources were used:
+   https://api.nuget.org/v3/index.json
+
+The given project `MaintainXpert.Api` has no vulnerable packages given the current sources.
+The given project `MaintainXpert.Assets` has no vulnerable packages given the current sources.
+The given project `MaintainXpert.Maintenance` has no vulnerable packages given the current sources.
+The given project `MaintainXpert.Notifications` has no vulnerable packages given the current sources.
+The given project `MaintainXpert.SharedKernel` has no vulnerable packages given the current sources.
+The given project `MaintainXpert.Api.Tests` has no vulnerable packages given the current sources.
+The given project `MaintainXpert.Assets.Tests` has no vulnerable packages given the current sources.
+The given project `MaintainXpert.E2E.Tests` has no vulnerable packages given the current sources.
+The given project `MaintainXpert.Maintenance.Tests` has no vulnerable packages given the current sources.
+The given project `MaintainXpert.Notifications.Tests` has no vulnerable packages given the current sources.

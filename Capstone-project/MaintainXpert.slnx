@@ -11,5 +11,6 @@
     <Project Path="tests/MaintainXpert.Assets.Tests/MaintainXpert.Assets.Tests.csproj" />
     <Project Path="tests/MaintainXpert.Notifications.Tests/MaintainXpert.Notifications.Tests.csproj" />
     <Project Path="tests/MaintainXpert.Api.Tests/MaintainXpert.Api.Tests.csproj" />
+    <Project Path="tests/MaintainXpert.E2E.Tests/MaintainXpert.E2E.Tests.csproj" />
   </Folder>
 </Solution>

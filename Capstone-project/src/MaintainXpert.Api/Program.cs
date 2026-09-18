@@ -8,8 +8,10 @@ using MaintainXpert.Maintenance.Infrastructure;
 using MaintainXpert.Notifications.Application;
 using MaintainXpert.Notifications.Infrastructure;
 using MaintainXpert.SharedKernel;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json.Serialization;
+using System.Threading.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -42,10 +44,12 @@ else
 
 builder.Services.AddSingleton<INotificationSink, ConsoleNotificationSink>();
 
+builder.Services.AddScoped<IAssetLookup, AssetLookupAdapter>();
 builder.Services.AddScoped<IDomainEventDispatcher, InProcessDomainEventDispatcher>();
 builder.Services.AddScoped<WorkOrderService>();
 
 builder.Services.AddScoped<IDomainEventHandler<WorkOrderCreated>, WorkOrderCreatedNotificationHandler>();
+builder.Services.AddScoped<IDomainEventHandler<WorkOrderStarted>, WorkOrderStartedHandler>();
 builder.Services.AddScoped<IDomainEventHandler<WorkOrderCompleted>, WorkOrderCompletedHandler>();
 
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
@@ -53,6 +57,21 @@ builder.Services.AddProblemDetails();
 
 builder.Services.AddApiJwtAuthentication(builder.Configuration);
 builder.Services.AddApiHardening();
+
+// Day 27's threat model flagged /auth/token as unbounded against credential-stuffing
+// (accepted risk at the time, "flagged as a follow-up"). This closes that gap: a caller
+// is capped at a fixed number of token attempts per window, tracked per remote IP.
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+
+    options.AddFixedWindowLimiter(RateLimiterPolicies.AuthToken, limiterOptions =>
+    {
+        limiterOptions.PermitLimit = 10;
+        limiterOptions.Window = TimeSpan.FromMinutes(1);
+        limiterOptions.QueueLimit = 0;
+    });
+});
 
 builder.Services.AddHealthChecks();
 
@@ -87,6 +106,8 @@ if (useSqlServer)
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     await db.Database.EnsureCreatedAsync();
 }
+
+app.UseRateLimiter();
 
 app.UseAuthentication();
 app.UseAuthorization();

@@ -21,7 +21,8 @@ public static class AuthEndpoints
             logger.LogInformation("Token issued for client {ClientId}", request.ClientId);
 
             return Results.Ok(new TokenResponse(accessToken, "Bearer", expiresIn));
-        });
+        })
+        .RequireRateLimiting(RateLimiterPolicies.AuthToken);
 
         return group;
     }

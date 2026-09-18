@@ -31,4 +31,19 @@ public sealed class Asset
         LastMaintenanceCompletedAt = completedAt;
         Status = AssetStatus.Operational;
     }
+
+    public void BeginMaintenance()
+    {
+        Status = AssetStatus.UnderMaintenance;
+    }
+
+    public void Decommission()
+    {
+        if (Status == AssetStatus.Decommissioned)
+        {
+            throw new InvalidAssetOperationException("Asset is already decommissioned.");
+        }
+
+        Status = AssetStatus.Decommissioned;
+    }
 }

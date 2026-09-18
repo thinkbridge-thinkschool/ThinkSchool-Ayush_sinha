@@ -1,0 +1,12 @@
+Starting MaintainXpert.Api (C:\Users\DELL\Desktop\thingschool\Capstone-project\src\MaintainXpert.Api\MaintainXpert.Api.csproj) on http://127.0.0.1:51919...
+Warming up (20 requests)...
+Measuring (300 requests) against POST /api/v1/work-orders...
+
+=== Hot-path benchmark: POST /api/v1/work-orders ===
+Requests measured: 300 (after 20 warm-up requests)
+min:  1.738 ms
+p50:  5.291 ms
+p95:  26.617 ms
+p99:  52.169 ms
+max:  143.496 ms
+mean: 10.044 ms

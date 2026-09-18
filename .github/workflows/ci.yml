@@ -137,3 +137,85 @@ jobs:
           if percentage < THRESHOLD:
               sys.exit(1)
           PY
+
+  capstone:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Restore MaintainXpert
+        run: dotnet restore Capstone-project/MaintainXpert.slnx
+
+      - name: Build MaintainXpert
+        run: dotnet build Capstone-project/MaintainXpert.slnx --no-restore --configuration Release
+
+      - name: Run unit tests (Maintenance)
+        run: >
+          dotnet test Capstone-project/tests/MaintainXpert.Maintenance.Tests/MaintainXpert.Maintenance.Tests.csproj
+          --no-build --configuration Release
+          --logger "trx;LogFileName=Maintenance.trx"
+          --collect:"XPlat Code Coverage"
+          --results-directory ./TestResults/Capstone/Maintenance
+
+      - name: Run unit tests (Assets)
+        run: >
+          dotnet test Capstone-project/tests/MaintainXpert.Assets.Tests/MaintainXpert.Assets.Tests.csproj
+          --no-build --configuration Release
+          --logger "trx;LogFileName=Assets.trx"
+          --collect:"XPlat Code Coverage"
+          --results-directory ./TestResults/Capstone/Assets
+
+      - name: Run unit tests (Notifications)
+        run: >
+          dotnet test Capstone-project/tests/MaintainXpert.Notifications.Tests/MaintainXpert.Notifications.Tests.csproj
+          --no-build --configuration Release
+          --logger "trx;LogFileName=Notifications.trx"
+          --collect:"XPlat Code Coverage"
+          --results-directory ./TestResults/Capstone/Notifications
+
+      - name: Run integration tests (Api, WebApplicationFactory)
+        run: >
+          dotnet test Capstone-project/tests/MaintainXpert.Api.Tests/MaintainXpert.Api.Tests.csproj
+          --no-build --configuration Release
+          --logger "trx;LogFileName=Api.trx"
+          --collect:"XPlat Code Coverage"
+          --results-directory ./TestResults/Capstone/Api
+
+      - name: Run E2E test (real out-of-process host)
+        run: >
+          dotnet test Capstone-project/tests/MaintainXpert.E2E.Tests/MaintainXpert.E2E.Tests.csproj
+          --no-build --configuration Release
+          --logger "trx;LogFileName=E2E.trx"
+          --results-directory ./TestResults/Capstone/E2E
+
+      - name: Check for vulnerable NuGet packages
+        shell: bash
+        run: |
+          set -euo pipefail
+          output=$(dotnet list Capstone-project/MaintainXpert.slnx package --vulnerable --include-transitive)
+          echo "$output"
+          if echo "$output" | grep -qi "has the following vulnerable packages"; then
+            echo "Vulnerable packages detected - failing the build."
+            exit 1
+          fi
+
+      - name: Upload Capstone test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: capstone-test-results
+          path: TestResults/Capstone/**/*.trx
+
+      - name: Upload Capstone coverage reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: capstone-coverage-reports
+          path: TestResults/Capstone/**/coverage.cobertura.xml

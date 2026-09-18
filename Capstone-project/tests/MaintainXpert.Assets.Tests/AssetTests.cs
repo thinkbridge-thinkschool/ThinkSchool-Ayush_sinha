@@ -34,4 +34,36 @@ public class AssetTests
         asset.LastMaintenanceCompletedAt.Should().Be(completedAt);
         asset.Status.Should().Be(AssetStatus.Operational);
     }
+
+    [Fact]
+    public void BeginMaintenance_marks_the_asset_under_maintenance()
+    {
+        var asset = Asset.Register("HVAC Unit 4");
+
+        asset.BeginMaintenance();
+
+        asset.Status.Should().Be(AssetStatus.UnderMaintenance);
+    }
+
+    [Fact]
+    public void Decommission_marks_an_operational_asset_decommissioned()
+    {
+        var asset = Asset.Register("HVAC Unit 4");
+
+        asset.Decommission();
+
+        asset.Status.Should().Be(AssetStatus.Decommissioned);
+    }
+
+    [Fact]
+    public void Decommissioning_an_already_decommissioned_asset_fails()
+    {
+        var asset = Asset.Register("HVAC Unit 4");
+        asset.Decommission();
+
+        var act = () => asset.Decommission();
+
+        act.Should().Throw<InvalidAssetOperationException>()
+            .WithMessage("*already decommissioned*");
+    }
 }

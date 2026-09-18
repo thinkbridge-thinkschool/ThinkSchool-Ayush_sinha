@@ -20,4 +20,10 @@ public sealed class InMemoryAssetRepository : IAssetRepository
         _assets.TryGetValue(id, out var asset);
         return Task.FromResult(asset);
     }
+
+    public Task UpdateAsync(Asset asset, CancellationToken cancellationToken = default)
+    {
+        _assets[asset.Id] = asset;
+        return Task.CompletedTask;
+    }
 }

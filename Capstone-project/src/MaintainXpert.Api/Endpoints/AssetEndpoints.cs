@@ -40,6 +40,21 @@ public static class AssetEndpoints
             var asset = await repository.GetByIdAsync(new AssetId(id));
             return asset is null ? Results.NotFound() : Results.Ok(ToResponse(asset));
         });
+
+        group.MapPost("/{id:guid}/decommission", async (Guid id, IAssetRepository repository) =>
+        {
+            var asset = await repository.GetByIdAsync(new AssetId(id));
+
+            if (asset is null)
+            {
+                return Results.NotFound();
+            }
+
+            asset.Decommission();
+            await repository.UpdateAsync(asset);
+            return Results.Ok(ToResponse(asset));
+        })
+        .RequireAuthorization("workorders.write");
     }
 
     private static AssetResponse ToResponse(Asset asset) => new(
