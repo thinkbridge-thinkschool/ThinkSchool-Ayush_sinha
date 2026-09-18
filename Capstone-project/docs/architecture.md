@@ -1,4 +1,4 @@
-# MaintainXpert — Architecture (Day 22 Kickoff)
+# MaintainXpert — Architecture
 
 ## 1. Product slice
 
@@ -22,7 +22,14 @@ support the work-order lifecycle.
   work-order lifecycle. This is the core context for the initial slice.
 - **AssetManagement** — owns assets/machines and their maintenance-related
   state. Other contexts reference an asset only by its `AssetId`; they
-  never reach into `Asset` directly.
+  never reach into `Asset` directly. `Maintenance` needs to know whether a
+  referenced asset exists and is decommissioned before raising a work
+  order against it; it gets that through `Maintenance.Application.IAssetLookup`
+  — a port `Maintenance` owns and declares, per the dependency-inversion
+  shape already used for `IWorkOrderRepository`/`IAssetRepository`. Only
+  the API host (composition root) implements it (`AssetLookupAdapter`),
+  keeping the one-directional dependency rule intact: `Maintenance`'s own
+  project never references `Assets`.
 - **Notifications** — reacts to maintenance events asynchronously. Kept
   deliberately thin at this stage: no email/SMS integration, just a
   console sink standing in for a future channel.
@@ -50,8 +57,22 @@ support the work-order lifecycle.
 - A completed work order cannot be reassigned.
 - Lifecycle transitions are one-directional and validated: you cannot
   `Start` before `Assigned`, or `Complete` before `InProgress`.
+- Beyond the aggregate itself, `WorkOrderService.CreateAsync` rejects a
+  work order raised against an asset that does not exist, or one that has
+  been decommissioned (`AssetNotFoundException` / `AssetDecommissionedException`,
+  mapped to 404/409). This is an application-level rule, not an aggregate
+  invariant, because `WorkOrder.Create` has no way to ask another context
+  whether its `AssetId` is valid — that is exactly what `IAssetLookup` is
+  for.
 
-Covered by `tests/MaintainXpert.Maintenance.Tests/WorkOrderTests.cs`.
+Covered by `tests/MaintainXpert.Maintenance.Tests/WorkOrderTests.cs` and
+`WorkOrderServiceTests.cs`.
+
+`Asset` (in `MaintainXpert.Assets.Domain`) has its own lifecycle:
+`Operational` (default) ⇄ `UnderMaintenance` (while a work order raised
+against it is in progress) → `Decommissioned` (terminal, via an explicit
+`POST /assets/{id}/decommission`; decommissioning an already-decommissioned
+asset is rejected). Covered by `tests/MaintainXpert.Assets.Tests/AssetTests.cs`.
 
 ## 6. Module boundaries
 
@@ -83,13 +104,18 @@ shape: HTTP endpoint → `WorkOrderService` → aggregate method → repository.
 `Notifications.WorkOrderCreatedNotificationHandler` sends a notification
 (console sink today, a real channel later).
 
-**Flow 2 — Complete Work Order**
+**Flow 2 — Start Work Order**
+`WorkOrderService.StartAsync` → `WorkOrder.Start` raises `WorkOrderStarted`
+→ dispatched the same way → `Assets.WorkOrderStartedHandler` looks up the
+`Asset` and marks it `UnderMaintenance`.
+
+**Flow 3 — Complete Work Order**
 `WorkOrderService.CompleteAsync` → `WorkOrder.Complete` raises
 `WorkOrderCompleted` → dispatched the same way →
-`Assets.WorkOrderCompletedHandler` looks up the `Asset` and records
-`LastMaintenanceCompletedAt`.
+`Assets.WorkOrderCompletedHandler` looks up the `Asset`, records
+`LastMaintenanceCompletedAt`, and returns it to `Operational`.
 
-Both events are dispatched in-process by
+All three events are dispatched in-process by
 `MaintainXpert.Api.Infrastructure.InProcessDomainEventDispatcher`, which
 resolves `IDomainEventHandler<T>` from DI and invokes them after the
 aggregate is persisted. It plays the role a message broker would play
