@@ -19,4 +19,10 @@ public sealed class InMemoryWorkOrderRepository : IWorkOrderRepository
         _workOrders.TryGetValue(id, out var workOrder);
         return Task.FromResult(workOrder);
     }
+
+    public Task UpdateAsync(WorkOrder workOrder, CancellationToken cancellationToken = default)
+    {
+        _workOrders[workOrder.Id] = workOrder;
+        return Task.CompletedTask;
+    }
 }

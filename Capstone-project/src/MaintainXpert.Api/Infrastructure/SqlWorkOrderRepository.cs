@@ -26,4 +26,9 @@ public sealed class SqlWorkOrderRepository : IWorkOrderRepository
 
         return workOrder;
     }
+
+    public async Task UpdateAsync(WorkOrder workOrder, CancellationToken cancellationToken = default)
+    {
+        await _db.SaveChangesAsync(cancellationToken);
+    }
 }

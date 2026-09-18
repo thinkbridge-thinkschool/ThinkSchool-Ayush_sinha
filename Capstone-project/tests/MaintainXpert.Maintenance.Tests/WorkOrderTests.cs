@@ -34,12 +34,29 @@ public class WorkOrderTests
         var workOrder = WorkOrder.Create(AnAssetId, "Replace worn belt", WorkOrderPriority.Medium, Now);
 
         workOrder.AssignTechnician(ATechnicianId);
-        workOrder.Start();
+        workOrder.Start(Now.AddHours(1));
         workOrder.Complete(Now.AddHours(2));
 
         workOrder.Status.Should().Be(WorkOrderStatus.Completed);
         workOrder.AssignedTechnicianId.Should().Be(ATechnicianId);
         workOrder.DomainEvents.Should().Contain(e => e is WorkOrderCompleted);
+    }
+
+    [Fact]
+    public void Start_raises_WorkOrderStarted_event()
+    {
+        var workOrder = WorkOrder.Create(AnAssetId, "Replace worn belt", WorkOrderPriority.Medium, Now);
+        workOrder.AssignTechnician(ATechnicianId);
+
+        var startedAt = Now.AddHours(1);
+        workOrder.Start(startedAt);
+
+        workOrder.Status.Should().Be(WorkOrderStatus.InProgress);
+        workOrder.DomainEvents.Should().ContainSingle(e => e is WorkOrderStarted);
+        var started = workOrder.DomainEvents.OfType<WorkOrderStarted>().Single();
+        started.WorkOrderId.Should().Be(workOrder.Id);
+        started.AssetId.Should().Be(AnAssetId);
+        started.OccurredAtUtc.Should().Be(startedAt);
     }
 
     [Fact]
@@ -58,7 +75,7 @@ public class WorkOrderTests
     {
         var workOrder = WorkOrder.Create(AnAssetId, "Replace worn belt", WorkOrderPriority.Medium, Now);
         workOrder.AssignTechnician(ATechnicianId);
-        workOrder.Start();
+        workOrder.Start(Now.AddHours(1));
         workOrder.Complete(Now.AddHours(2));
 
         var act = () => workOrder.AssignTechnician(TechnicianId.New());
@@ -72,7 +89,7 @@ public class WorkOrderTests
     {
         var workOrder = WorkOrder.Create(AnAssetId, "Replace worn belt", WorkOrderPriority.Medium, Now);
 
-        var act = () => workOrder.Start();
+        var act = () => workOrder.Start(Now);
 
         act.Should().Throw<InvalidWorkOrderTransitionException>();
     }

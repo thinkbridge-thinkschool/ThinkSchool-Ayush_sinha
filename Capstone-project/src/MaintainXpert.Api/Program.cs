@@ -42,10 +42,12 @@ else
 
 builder.Services.AddSingleton<INotificationSink, ConsoleNotificationSink>();
 
+builder.Services.AddScoped<IAssetLookup, AssetLookupAdapter>();
 builder.Services.AddScoped<IDomainEventDispatcher, InProcessDomainEventDispatcher>();
 builder.Services.AddScoped<WorkOrderService>();
 
 builder.Services.AddScoped<IDomainEventHandler<WorkOrderCreated>, WorkOrderCreatedNotificationHandler>();
+builder.Services.AddScoped<IDomainEventHandler<WorkOrderStarted>, WorkOrderStartedHandler>();
 builder.Services.AddScoped<IDomainEventHandler<WorkOrderCompleted>, WorkOrderCompletedHandler>();
 
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();

@@ -60,6 +60,9 @@ public class WorkOrderHappyPathTests : IClassFixture<ApiFactory>
         startResponse.StatusCode.Should().Be(HttpStatusCode.OK);
         (await startResponse.Content.ReadFromJsonAsync<WorkOrderDto>())!.Status.Should().Be("InProgress");
 
+        var duringMaintenanceResponse = await client.GetAsync($"/api/v1/assets/{asset.Id}");
+        (await duringMaintenanceResponse.Content.ReadFromJsonAsync<AssetDto>())!.Status.Should().Be("UnderMaintenance");
+
         var completeResponse = await client.PostAsync($"/api/v1/work-orders/{workOrder.Id}/complete", content: null);
         completeResponse.StatusCode.Should().Be(HttpStatusCode.OK);
         (await completeResponse.Content.ReadFromJsonAsync<WorkOrderDto>())!.Status.Should().Be("Completed");
@@ -68,6 +71,68 @@ public class WorkOrderHappyPathTests : IClassFixture<ApiFactory>
         finalAssetResponse.StatusCode.Should().Be(HttpStatusCode.OK);
         var finalAsset = await finalAssetResponse.Content.ReadFromJsonAsync<AssetDto>();
         finalAsset!.LastMaintenanceCompletedAt.Should().NotBeNull();
+        finalAsset.Status.Should().Be("Operational");
+    }
+
+    [Fact]
+    public async Task Creating_a_work_order_for_a_nonexistent_asset_returns_not_found()
+    {
+        var client = await CreateAuthenticatedClientAsync();
+
+        var response = await client.PostAsJsonAsync("/api/v1/work-orders", new
+        {
+            AssetId = Guid.NewGuid(),
+            Description = "Replace worn belt",
+            Priority = "Medium"
+        });
+
+        response.StatusCode.Should().Be(HttpStatusCode.NotFound);
+    }
+
+    [Fact]
+    public async Task Creating_a_work_order_for_a_decommissioned_asset_is_rejected()
+    {
+        var client = await CreateAuthenticatedClientAsync();
+
+        var assetResponse = await client.PostAsJsonAsync("/api/v1/assets", new { Name = "Retired Compressor" });
+        var asset = await assetResponse.Content.ReadFromJsonAsync<AssetDto>();
+
+        var decommissionResponse = await client.PostAsync($"/api/v1/assets/{asset!.Id}/decommission", content: null);
+        decommissionResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        (await decommissionResponse.Content.ReadFromJsonAsync<AssetDto>())!.Status.Should().Be("Decommissioned");
+
+        var response = await client.PostAsJsonAsync("/api/v1/work-orders", new
+        {
+            AssetId = asset.Id,
+            Description = "Replace worn belt",
+            Priority = "Medium"
+        });
+
+        response.StatusCode.Should().Be(HttpStatusCode.Conflict);
+    }
+
+    [Fact]
+    public async Task Decommissioning_a_nonexistent_asset_returns_not_found()
+    {
+        var client = await CreateAuthenticatedClientAsync();
+
+        var response = await client.PostAsync($"/api/v1/assets/{Guid.NewGuid()}/decommission", content: null);
+
+        response.StatusCode.Should().Be(HttpStatusCode.NotFound);
+    }
+
+    [Fact]
+    public async Task Decommissioning_an_already_decommissioned_asset_returns_conflict()
+    {
+        var client = await CreateAuthenticatedClientAsync();
+
+        var assetResponse = await client.PostAsJsonAsync("/api/v1/assets", new { Name = "Retired Pump" });
+        var asset = await assetResponse.Content.ReadFromJsonAsync<AssetDto>();
+        await client.PostAsync($"/api/v1/assets/{asset!.Id}/decommission", content: null);
+
+        var response = await client.PostAsync($"/api/v1/assets/{asset.Id}/decommission", content: null);
+
+        response.StatusCode.Should().Be(HttpStatusCode.Conflict);
     }
 
     [Fact]

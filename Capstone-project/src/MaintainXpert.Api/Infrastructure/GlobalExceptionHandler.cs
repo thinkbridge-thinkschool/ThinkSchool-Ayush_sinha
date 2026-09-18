@@ -1,3 +1,4 @@
+using MaintainXpert.Assets.Domain;
 using MaintainXpert.Maintenance.Application;
 using MaintainXpert.Maintenance.Domain;
 using Microsoft.AspNetCore.Diagnostics;
@@ -33,10 +34,28 @@ public sealed class GlobalExceptionHandler : IExceptionHandler
                 Title = "Work order not found",
                 Detail = exception.Message
             },
+            AssetNotFoundException => new ProblemDetails
+            {
+                Status = StatusCodes.Status404NotFound,
+                Title = "Asset not found",
+                Detail = exception.Message
+            },
+            AssetDecommissionedException => new ProblemDetails
+            {
+                Status = StatusCodes.Status409Conflict,
+                Title = "Asset decommissioned",
+                Detail = exception.Message
+            },
             InvalidWorkOrderTransitionException => new ProblemDetails
             {
                 Status = StatusCodes.Status409Conflict,
                 Title = "Invalid work order transition",
+                Detail = exception.Message
+            },
+            InvalidAssetOperationException => new ProblemDetails
+            {
+                Status = StatusCodes.Status409Conflict,
+                Title = "Invalid asset operation",
                 Detail = exception.Message
             },
             ArgumentException => new ProblemDetails

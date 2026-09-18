@@ -1,0 +1,44 @@
+Day 30 — persistence regression check
+
+Finding: SqlWorkOrderRepository and SqlAssetRepository only called
+AppDbContext.SaveChangesAsync from AddAsync. Neither repository interface had an
+Update method, and WorkOrderService/the Assets domain-event handlers never called
+one. The in-memory repositories masked this completely, because WorkOrder/Asset are
+reference types held directly in a ConcurrentDictionary, so a mutation is visible
+immediately without any explicit "save" step. Against the real SQL-backed
+repositories, though, every state change after the initial create (assign, start,
+complete, decommission, and the cross-module asset updates from the WorkOrderStarted/
+WorkOrderCompleted handlers) was silently lost the moment the request's scoped
+DbContext was disposed - a real gap in "persist the feature state correctly," not
+covered by Day 27's or Day 29's evidence, since both only exercised the in-memory
+path or checked POST responses (which reflect the mutated in-memory object, not a
+re-read from storage).
+
+Fix: added IWorkOrderRepository.UpdateAsync / IAssetRepository.UpdateAsync (SQL
+implementations call SaveChangesAsync; in-memory implementations re-set the
+dictionary entry, kept for interface symmetry). WorkOrderService and the Assets
+domain-event handlers now call UpdateAsync after every mutation.
+
+Proof the fix is real, not just asserted:
+
+1. tests/MaintainXpert.Api.Tests/SqlRepositoryPersistenceTests.cs exercises
+   SqlWorkOrderRepository/SqlAssetRepository against EF Core's InMemory provider,
+   opening a fresh AppDbContext per step - the same shape as separate HTTP requests
+   each getting their own scoped DbContext - so a missing SaveChanges shows up as a
+   stale read instead of being hidden by change-tracker identity resolution within
+   one request.
+
+2. Manually reverted SqlWorkOrderRepository.UpdateAsync to a no-op and re-ran:
+
+   dotnet test tests\MaintainXpert.Api.Tests --filter "FullyQualifiedName~SqlRepositoryPersistenceTests"
+
+   Result: Failed! - Failed: 1, Passed: 1, Total: 2
+   (WorkOrder_transitions_persist_across_separate_requests failed as expected;
+   Asset_decommission_persists_across_separate_requests still passed because only
+   the work-order repository's fix was reverted.)
+
+3. Restored the fix and re-ran the full suite:
+
+   dotnet test
+
+   Result: 32/32 passed, 0 failed (see build-and-test-output.txt).

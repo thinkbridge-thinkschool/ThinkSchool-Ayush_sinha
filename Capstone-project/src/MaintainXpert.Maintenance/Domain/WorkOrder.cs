@@ -64,7 +64,7 @@ public sealed class WorkOrder
         Status = WorkOrderStatus.Assigned;
     }
 
-    public void Start()
+    public void Start(DateTimeOffset startedAt)
     {
         if (Status != WorkOrderStatus.Assigned)
         {
@@ -73,6 +73,7 @@ public sealed class WorkOrder
         }
 
         Status = WorkOrderStatus.InProgress;
+        _domainEvents.Add(new WorkOrderStarted(Id, AssetId, startedAt));
     }
 
     public void Complete(DateTimeOffset completedAt)

@@ -27,4 +27,9 @@ public sealed class SqlAssetRepository : IAssetRepository
 
         return asset;
     }
+
+    public async Task UpdateAsync(Asset asset, CancellationToken cancellationToken = default)
+    {
+        await _db.SaveChangesAsync(cancellationToken);
+    }
 }
