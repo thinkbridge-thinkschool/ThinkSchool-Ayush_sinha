@@ -15,6 +15,13 @@ public sealed class WorkOrderCompletedHandler : IDomainEventHandler<WorkOrderCom
     public async Task HandleAsync(WorkOrderCompleted domainEvent, CancellationToken cancellationToken = default)
     {
         var asset = await _assetRepository.GetByIdAsync(domainEvent.AssetId, cancellationToken);
-        asset?.RecordMaintenanceCompleted(domainEvent.OccurredAtUtc);
+
+        if (asset is null)
+        {
+            return;
+        }
+
+        asset.RecordMaintenanceCompleted(domainEvent.OccurredAtUtc);
+        await _assetRepository.UpdateAsync(asset, cancellationToken);
     }
 }
